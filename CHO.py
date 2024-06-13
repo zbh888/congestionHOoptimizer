@@ -82,7 +82,7 @@ class CHO_optimizor:
         return array
 
     # ========= optimize ============
-    def __init__(self, feasible, coverage_info, max_requests, max_access, T):
+    def __init__(self, feasible, coverage_info, max_access, T):
         self.T = T
         self.original_C = copy.deepcopy(coverage_info)
         self.N_UE, self.N_SAT, self.N_TIME = self.original_C.shape
@@ -90,12 +90,10 @@ class CHO_optimizor:
         self.L, self.o2i = self.generate_important_time(LL)  # takes a lot of time
         self.C = self.generate_important_coverage(self.original_C, self.o2i)
         self.i2o = self.important2original(self.o2i)
-
-        self.MAX_REQUESTS = max_requests
         self.MAX_ACCESS = max_access
         self.feasible = feasible
 
-    def optimize(self, iteration, prev_d):
+    def optimize(self):
         N_candidate = 3
         LogStartingTime = time.time()
         UE_SAT_TIME = list(set([(u, s, t) for u in list(range(self.N_UE)) for s in list(range(self.N_SAT)) for t in
@@ -144,27 +142,26 @@ class CHO_optimizor:
         #     d_h = prev_d['h']
         #     for u, s in UE_SAT:
         #         mdl.addConstr(((h[u, s, 0] == int(d_h[u][s][-1]))), name="iteration")
-        for u,s,t in UE_SAT_TIME:
+        for u, s, t in UE_SAT_TIME:
             mdl.addConstr((x[u, s, t] == m[u, s, t] * self.L[u][s][t]), name="1")
-            mdl.addConstr((z[u, s, t] == (2+N_candidate)*x[u, s, t] + 
+            mdl.addConstr((z[u, s, t] == (2 + N_candidate) * x[u, s, t] +
                            y[u, s, t] +
-                           h[u, s, t] + 
-                           2* xx[u, s, t] + 
-                           yy[u, s, t] + 
-                           3* hh[u, s, t]), name="1")
-            
+                           h[u, s, t] +
+                           2 * xx[u, s, t] +
+                           yy[u, s, t] +
+                           3 * hh[u, s, t]), name="1")
 
         for u, t in UE_TIME:
             mdl.addConstr(quicksum(h[u, s, t] for s in range(self.N_SAT)) <= 1, name="2")
             mdl.addConstr(quicksum(m[u, s, t] for s in range(self.N_SAT)) == 1, name="3")
             mdl.addConstr((quicksum(h[u, s, t] for s in range(self.N_SAT))
-                        == quicksum(x[u, s, t] for s in range(self.N_SAT))), name="4")
+                           == quicksum(x[u, s, t] for s in range(self.N_SAT))), name="4")
             mdl.addConstr((quicksum(y[u, s, t] for s in range(self.N_SAT))
-                        == (N_candidate-1)*quicksum(h[u, s, t] for s in range(self.N_SAT))), name="4")
+                           == (N_candidate - 1) * quicksum(h[u, s, t] for s in range(self.N_SAT))), name="4")
             mdl.addConstr((quicksum(yy[u, s, t] for s in range(self.N_SAT))
-                        == (N_candidate-1)*quicksum(hh[u, s, t] for s in range(self.N_SAT))), name="4")
+                           == (N_candidate - 1) * quicksum(hh[u, s, t] for s in range(self.N_SAT))), name="4")
             mdl.addConstr((quicksum(xx[u, s, t] for s in range(self.N_SAT))
-                        == quicksum(hh[u, s, t] for s in range(self.N_SAT))), name="4")
+                           == quicksum(hh[u, s, t] for s in range(self.N_SAT))), name="4")
 
         for u, s, t in UE_SAT_TIME:
             mdl.addConstr(((h[u, s, t] <= self.C[u][s][t])), name="BC11")
@@ -173,13 +170,13 @@ class CHO_optimizor:
             mdl.addConstr(((hh[u, s, t] + h[u, s, t] <= 1)), name="BC7")
             mdl.addConstr(((h[u, s, t] + y[u, s, t] <= 1)), name="BC7")
             mdl.addConstr(((x[u, s, t] + y[u, s, t] <= 1)), name="BC7")
-            mdl.addConstr(((y[u, s, t] <= 1 - d[u,s,t])), name="BC7")
-            mdl.addConstr(((yy[u, s, t] <= d[u,s,t])), name="BC7")
+            mdl.addConstr(((y[u, s, t] <= 1 - d[u, s, t])), name="BC7")
+            mdl.addConstr(((yy[u, s, t] <= d[u, s, t])), name="BC7")
             if t != 0:
                 mdl.addConstr((m[u, s, t] == quicksum(h[u, s, t - 1] for s in range(self.N_SAT)) * h[u, s, t - 1]
                                + (1 - quicksum(h[u, s, t - 1] for s in range(self.N_SAT))) * m[u, s, t - 1]),
                               name="AC4")
-                mdl.addConstr((d[u, s, t] == (1 - yy[u,s,t-1])*(d[u,s,t-1]+y[u,s,t-1])), name="BC7")
+                mdl.addConstr((d[u, s, t] == (1 - yy[u, s, t - 1]) * (d[u, s, t - 1] + y[u, s, t - 1])), name="BC7")
 
         for u, s in UE_SAT:
             mdl.addConstr(HT[u, s] == quicksum((self.i2o[u][nt] * h[u, s, nt]) for nt in range(len(self.C[u][s]))),
@@ -234,27 +231,23 @@ class CHO_optimizor:
         mdl.optimize()
         print('\033[91m' + f"Optimization costs {round(time.time() - LogStartingTime, 1)} seconds" + '\033[0m')
 
-        self.mdl = mdl
-        # print(z)
-        # self.z = z
-        # self.m = m
-        # self.a = a
         dict = {}
-        dict["m"] = self.save_one_variable(m)
-        # dict["h"] = self.save_one_variable(h)
-        # dict["a"] = self.save_one_variable(a)
-        # # if self.feasible:
-        # #     dict["f"] = self.save_one_variable(f)
-        # dict["MAX_REQUESTS"] = self.MAX_REQUESTS
-        # dict["MAX_ACCESS"] = self.MAX_ACCESS
-        # dict["C"] = self.C
-        # dict["o2i"] = self.o2i
-        # dict["i2o"] = self.i2o
-        # dict["N_TIME"] = self.N_TIME
-        # dict["L"] = self.L
-        # with open('cho' + str(iteration) + '.pkl', 'wb') as outp:
-        #     pickle.dump(dict, outp, pickle.HIGHEST_PROTOCOL)
-        return dict
+        dict["x"] = self.save_one_variable(x)
+        dict["xx"] = self.save_one_variable(xx)
+        dict["y"] = self.save_one_variable(y)
+        dict["yy"] = self.save_one_variable(yy)
+        dict["h"] = self.save_one_variable(h)
+        dict["hh"] = self.save_one_variable(hh)
+        dict["C"] = self.C
+        dict["L"] = self.L
+        # if self.feasible:
+        #     dict["f"] = self.save_one_variable(f)
+        dict["o2i"] = self.o2i
+        dict["i2o"] = self.i2o
+        dict["N_TIME"] = self.N_TIME
+        with open('cho' + '.pkl', 'wb') as outp:
+            pickle.dump(dict, outp, pickle.HIGHEST_PROTOCOL)
+        # return dict
 
     def show_redundant_const(self):
         print("#####Redundant Constraints#####")
@@ -262,4 +255,3 @@ class CHO_optimizor:
             if constr.Slack < 1e-6:
                 print(f"Constraint: {constr.ConstrName}")
         print()
-

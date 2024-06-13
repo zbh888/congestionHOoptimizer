@@ -7,8 +7,6 @@ from CHO import CHO_optimizor as optimizer
 
 if __name__ == "__main__":
     MAX_ACCESS = 1000
-    feasible = True
-    iterations = 1
     optimizor_option = "CHO" # CHO or BHO
 
     C = np.load('../generateScenario/simulation_coverage_info.npy')

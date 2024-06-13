@@ -82,7 +82,7 @@ class CHO_optimizor:
         return array
 
     # ========= optimize ============
-    def __init__(self, feasible, coverage_info, max_access, T):
+    def __init__(self, coverage_info, max_access, T):
         self.T = T
         self.original_C = copy.deepcopy(coverage_info)
         self.N_UE, self.N_SAT, self.N_TIME = self.original_C.shape
@@ -91,7 +91,6 @@ class CHO_optimizor:
         self.C = self.generate_important_coverage(self.original_C, self.o2i)
         self.i2o = self.important2original(self.o2i)
         self.MAX_ACCESS = max_access
-        self.feasible = feasible
 
     def optimize(self):
         N_candidate = 3
@@ -203,8 +202,6 @@ class CHO_optimizor:
         for ot in range(self.N_TIME):
             UE_N_TIME = self.generate_UE_N_TIME(ot)
             Number_of_satellite = self.N_SAT
-            if self.feasible:
-                Number_of_satellite = self.N_SAT - 1
             for s in range(Number_of_satellite):
                 if len(UE_N_TIME) >= 1:
                     mdl.addConstr((quicksum((hh[u, s, t]) for u, t in UE_N_TIME)

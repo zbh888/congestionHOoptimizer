@@ -105,6 +105,7 @@ class CHO_optimizor:
 
         # variables
         mdl = gurobipy.Model("CHO")
+        o1 = mdl.addVar(vtype=GRB.CONTINUOUS, name="objective")
         o = mdl.addVars(SAT_TIME, vtype=GRB.CONTINUOUS, name="objective")
         m = mdl.addVars(UE_SAT_TIME, vtype=GRB.BINARY, name="m")
         d = mdl.addVars(UE_SAT_TIME, vtype=GRB.BINARY, name="h")
@@ -217,8 +218,8 @@ class CHO_optimizor:
                 if len(UE_N_TIME) >= 1:
                     mdl.addConstr(o[s, ot] == quicksum(z[u, s, t] for u, t in UE_N_TIME), name="objective")
 
-        mdl.addConstr(o == gurobipy.max_(o), "max_constraint")
-        mdl.setObjective(o, sense=GRB.MINIMIZE)
+        mdl.addConstr(o1 == gurobipy.max_(o), "max_constraint")
+        mdl.setObjective(o1, sense=GRB.MINIMIZE)
         print('\033[91m' + f"Adding constraints costs {round(time.time() - LogStartingTime, 1)} seconds" + '\033[0m')
 
         LogStartingTime = time.time()

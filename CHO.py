@@ -209,15 +209,8 @@ class CHO_optimizor:
                 if len(UE_N_TIME) >= 1:
                     mdl.addConstr((quicksum((hh[u, s, t]) for u, t in UE_N_TIME)
                                    <= self.MAX_ACCESS), name="BC8")
-
-        # Maximum requests of $s$ allowed at $t$
-        for ot in range(self.N_TIME):
-            UE_N_TIME = self.generate_UE_N_TIME(ot)
-            Number_of_satellite = self.N_SAT
-            for s in range(Number_of_satellite):
-                if len(UE_N_TIME) >= 1:
                     mdl.addConstr(o[s, ot] == quicksum(z[u, s, t] for u, t in UE_N_TIME), name="objective")
-
+        #mdl.addConstr(o1 == gurobipy.max_([1]), "max_constraint")
         mdl.addConstr(o1 == gurobipy.max_(o), "max_constraint")
         mdl.setObjective(o1, sense=GRB.MINIMIZE)
         print('\033[91m' + f"Adding constraints costs {round(time.time() - LogStartingTime, 1)} seconds" + '\033[0m')

@@ -97,13 +97,15 @@ class CHO_optimizor:
         LogStartingTime = time.time()
         UE_SAT_TIME = list(set([(u, s, t) for u in list(range(self.N_UE)) for s in list(range(self.N_SAT)) for t in
                                 list(range(len(self.C[u][s])))]))
+        print(f"Decision matrix size: {len(UE_SAT_TIME)}")
         UE_SAT = list(set([(u, s) for u in list(range(self.N_UE)) for s in list(range(self.N_SAT))]))
         UE_TIME = list(set([(u, t) for u in list(range(self.N_UE)) for s in list(range(self.N_SAT)) for t in
                             list(range(len(self.C[u][s])))]))
+        SAT_TIME = list(set([(s, t) for s in list(range(self.N_SAT)) for t in list(range(self.N_TIME))]))
 
         # variables
         mdl = gurobipy.Model("CHO")
-        o = mdl.addVar(vtype=GRB.CONTINUOUS, name="objective")
+        o = mdl.addVars(SAT_TIME, vtype=GRB.CONTINUOUS, name="objective")
         m = mdl.addVars(UE_SAT_TIME, vtype=GRB.BINARY, name="m")
         d = mdl.addVars(UE_SAT_TIME, vtype=GRB.BINARY, name="h")
         h = mdl.addVars(UE_SAT_TIME, vtype=GRB.BINARY, name="h")
@@ -208,19 +210,14 @@ class CHO_optimizor:
                                    <= self.MAX_ACCESS), name="BC8")
 
         # Maximum requests of $s$ allowed at $t$
-        # for ot in range(self.N_TIME):
-        #     UE_N_TIME = self.generate_UE_N_TIME(ot)
-        #     Number_of_satellite = self.N_SAT
-        #     if self.feasible:
-        #         Number_of_satellite = self.N_SAT - 1
-        #     for s in range(Number_of_satellite):
-        #         if len(UE_N_TIME) >= 1:
-        #             mdl.addConstr((quicksum((h[u, s, t] * self.L[u][s][t] + 2*x[u, s, t]) for u, t in UE_N_TIME)
-        #                            <= self.MAX_REQUESTS), name="AC5")
-        #             mdl.addConstr(z[s, ot] == quicksum(x[u, s, t] for u, t in UE_N_TIME), name="objective")
-        #             objective_var.append(z[s,ot])
+        for ot in range(self.N_TIME):
+            UE_N_TIME = self.generate_UE_N_TIME(ot)
+            Number_of_satellite = self.N_SAT
+            for s in range(Number_of_satellite):
+                if len(UE_N_TIME) >= 1:
+                    mdl.addConstr(o[s, ot] == quicksum(z[u, s, t] for u, t in UE_N_TIME), name="objective")
 
-        mdl.addConstr(o == gurobipy.max_(z), "max_constraint")
+        mdl.addConstr(o == gurobipy.max_(o), "max_constraint")
         mdl.setObjective(o, sense=GRB.MINIMIZE)
         print('\033[91m' + f"Adding constraints costs {round(time.time() - LogStartingTime, 1)} seconds" + '\033[0m')
 

@@ -202,6 +202,7 @@ class CHO_optimizor:
                           == quicksum(yy[u, s, nt] for nt in range(len(self.C[u][s]))), name="BC6")
             mdl.addConstr(quicksum(xx[u, s, nt] for nt in range(len(self.C[u][s])))
                           == quicksum(x[u, s, nt] for nt in range(len(self.C[u][s]))), name="BC6")
+            mdl.addConstr(((d[u, s, 0] == 0)), name="BC11")
 
         for ot in range(self.N_TIME):
             UE_N_TIME = self.generate_UE_N_TIME(ot)
@@ -227,6 +228,7 @@ class CHO_optimizor:
         dict["yy"] = self.save_one_variable(yy)
         dict["h"] = self.save_one_variable(h)
         dict["hh"] = self.save_one_variable(hh)
+        dict["delta"] = self.save_one_variable(d)
         dict["C"] = self.C
         dict["L"] = self.L
         # if self.feasible:

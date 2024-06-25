@@ -171,6 +171,7 @@ class CHO_optimizor:
             mdl.addConstr(((hh[u, s, t] <= self.C[u][s][t])), name="BC11")
             mdl.addConstr(((y[u, s, t] <= self.C[u][s][t])), name="BC11")
             mdl.addConstr(((hh[u, s, t] + h[u, s, t] <= 1)), name="BC7")
+            mdl.addConstr(((hh[u, s, t] + x[u, s, t] <= 1)), name="BC7")
             mdl.addConstr(((h[u, s, t] + y[u, s, t] <= 1)), name="BC7")
             mdl.addConstr(((x[u, s, t] + y[u, s, t] <= 1)), name="BC7")
             mdl.addConstr(((y[u, s, t] <= 1 - d[u, s, t])), name="BC7")
